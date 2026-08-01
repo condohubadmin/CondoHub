@@ -8,6 +8,17 @@ const navigation = [
   { label: 'Pagamentos', href: '/dashboard/pagamentos' },
 ];
 
+const syndicNavigation = [
+  { label: 'Cadastro do condomínio', href: '/dashboard/condominio/cadastro' },
+  { label: 'Cadastro de moradores', href: '/dashboard/moradores' },
+  { label: 'Cadastro de unidades', href: '/dashboard/unidades' },
+  { label: 'Comunicados', href: '/dashboard/comunicados' },
+  { label: 'Financeiro', href: '/dashboard/financeiro' },
+  { label: 'Cobranças via Mercado Pago', href: '/dashboard/mercadopago' },
+  { label: 'Dashboard', href: '/dashboard' },
+  { label: 'Documentos', href: '/dashboard/documentos' },
+];
+
 export function AppShell({ children, title, subtitle }: { children: React.ReactNode; title: string; subtitle?: string }) {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 transition-colors dark:bg-slate-950 dark:text-slate-100">
@@ -33,6 +44,23 @@ export function AppShell({ children, title, subtitle }: { children: React.ReactN
                 {item.label}
               </Link>
             ))}
+
+            <div className="mt-4 rounded-xl border border-cyan-500/20 bg-cyan-500/10 p-3">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.3em] text-cyan-600 dark:text-cyan-400">
+                Síndico
+              </p>
+              <div className="space-y-1">
+                {syndicNavigation.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="flex items-center rounded-lg px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-white/70 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
           </nav>
         </aside>
 
