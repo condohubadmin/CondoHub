@@ -1,9 +1,8 @@
 import { createServerSupabaseClient } from '@/core/infrastructure/supabase/server';
 import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
 
 export async function getCurrentUser() {
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
   const {
     data: { user },
     error,
@@ -29,7 +28,7 @@ export async function requireAuth() {
 export async function signOutAction() {
   'use server';
 
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
   await supabase.auth.signOut();
   redirect('/auth/sign-in');
 }
@@ -37,7 +36,7 @@ export async function signOutAction() {
 export async function signInWithEmailAndPassword(email: string, password: string) {
   'use server';
 
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
