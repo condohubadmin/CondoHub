@@ -2,6 +2,10 @@ import { createServerSupabaseClient } from '@/core/infrastructure/supabase/serve
 
 export async function getUserProfile() {
   const supabase = await createServerSupabaseClient();
+  if (!supabase) {
+    return null;
+  }
+
   const {
     data: { user },
   } = await supabase.auth.getUser();

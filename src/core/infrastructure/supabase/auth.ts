@@ -3,6 +3,11 @@ import { redirect } from 'next/navigation';
 
 export async function getCurrentUser() {
   const supabase = await createServerSupabaseClient();
+
+  if (!supabase) {
+    return null;
+  }
+
   const {
     data: { user },
     error,
@@ -29,6 +34,10 @@ export async function signOutAction() {
   'use server';
 
   const supabase = await createServerSupabaseClient();
+  if (!supabase) {
+    redirect('/auth/sign-in');
+  }
+
   await supabase.auth.signOut();
   redirect('/auth/sign-in');
 }
@@ -37,6 +46,10 @@ export async function signInWithEmailAndPassword(email: string, password: string
   'use server';
 
   const supabase = await createServerSupabaseClient();
+  if (!supabase) {
+    return { success: false, message: 'As variáveis do Supabase não foram configuradas.' };
+  }
+
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
