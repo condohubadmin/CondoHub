@@ -82,7 +82,10 @@ export function SignInForm() {
       </form>
 
       <p className="mt-6 text-sm text-slate-400">
-        Ainda não possui conta? Crie o usuário no Supabase Auth e use o mesmo e-mail e senha aqui.
+        Ainda não possui conta?{' '}
+        <a href="/auth/sign-up" className="font-medium text-cyan-400 hover:text-cyan-300">
+          Criar conta
+        </a>
       </p>
     </div>
   );
