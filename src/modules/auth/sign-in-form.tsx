@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createBrowserSupabaseClient } from '@/core/infrastructure/supabase/client-browser';
@@ -33,7 +34,7 @@ export function SignInForm() {
       return;
     }
 
-    router.push('/dashboard/usuarios');
+    router.replace('/dashboard/usuarios');
     router.refresh();
   }
 
@@ -82,10 +83,10 @@ export function SignInForm() {
       </form>
 
       <p className="mt-6 text-sm text-slate-400">
-        Ainda não possui conta?{' '}
-        <a href="/auth/sign-up" className="font-medium text-cyan-400 hover:text-cyan-300">
-          Criar conta
-        </a>
+        Não possui conta ainda?{' '}
+        <Link href="/auth/sign-up" className="font-medium text-cyan-400 hover:text-cyan-300">
+          Crie agora!
+        </Link>
       </p>
     </div>
   );

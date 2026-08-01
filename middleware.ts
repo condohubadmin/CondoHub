@@ -1,13 +1,18 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const publicRoutes = ['/auth/sign-in', '/'];
+const publicRoutes = ['/auth/sign-in', '/auth/sign-up', '/'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isPublicRoute = publicRoutes.some((route) => pathname === route || pathname.startsWith('/auth'));
   const isDashboardRoute = pathname.startsWith('/dashboard');
-  const hasSessionCookie = request.cookies.has('sb-' + process.env.NEXT_PUBLIC_SUPABASE_URL?.split('//')[1]?.split('.')[0] + '-auth-token');
+  const hasSessionCookie = request.cookies.getAll().some((cookie) => cookie.name.startsWith('sb-') && cookie.name.endsWith('-auth-token'));
+
+  if ((pathname === '/auth/sign-in' || pathname === '/auth/sign-up') && hasSessionCookie) {
+    const dashboardUrl = new URL('/dashboard/usuarios', request.url);
+    return NextResponse.redirect(dashboardUrl);
+  }
 
   if (isDashboardRoute && !hasSessionCookie) {
     const signInUrl = new URL('/auth/sign-in', request.url);
@@ -22,5 +27,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/auth/sign-in'],
+  matcher: ['/dashboard/:path*', '/auth/sign-in', '/auth/sign-up'],
 };
