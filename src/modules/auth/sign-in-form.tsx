@@ -17,6 +17,13 @@ export function SignInForm() {
     setError(null);
 
     const supabase = createBrowserSupabaseClient();
+
+    if (!supabase) {
+      setError('As variáveis do Supabase ainda não foram configuradas.');
+      setLoading(false);
+      return;
+    }
+
     const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password });
 
     setLoading(false);
