@@ -33,12 +33,29 @@ const sections = [
   { key: 'activity', label: 'Atividades' },
 ] as const;
 
+const permissionMatrix: Array<{ role: Role; access: string[] }> = [
+  { role: 'sindico', access: ['Gestão completa', 'Cadastro de condomínio', 'Cobranças', 'Documentos'] },
+  { role: 'morador', access: ['Leitura', 'Solicitações', 'Comunicados'] },
+  { role: 'porteiro', access: ['Entrada e saída', 'Visitas', 'Ocorrências'] },
+  { role: 'admin', access: ['Administração geral', 'Perfis', 'Integrações'] },
+];
+
+const activityFeed = [
+  { title: 'Perfil alterado', detail: 'Ana Souza passou para Síndico.' },
+  { title: 'Novo acesso criado', detail: 'Bruno Lima recebeu acesso como Morador.' },
+  { title: 'Permissão revisada', detail: 'Porteiro ganhou acesso a ocorrências.' },
+];
+
 export default function UsuariosPage() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [activeSection, setActiveSection] = useState<(typeof sections)[number]['key']>('overview');
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [newName, setNewName] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [newRole, setNewRole] = useState<Role>('morador');
 
   async function loadProfiles() {
     const supabase = createBrowserSupabaseClient();
@@ -84,6 +101,33 @@ export default function UsuariosPage() {
     setMessage('Classificação atualizada com sucesso.');
   }
 
+  function handleCreateProfile(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!newName.trim() || !newEmail.trim()) {
+      setMessage('Preencha nome e e-mail para criar o perfil.');
+      return;
+    }
+
+    const profile: Profile = {
+      id: `${Date.now()}`,
+      full_name: newName.trim(),
+      email: newEmail.trim(),
+      role: newRole,
+    };
+
+    setProfiles((current) => [profile, ...current]);
+    setNewName('');
+    setNewEmail('');
+    setNewRole('morador');
+    setActiveSection('roles');
+    setMessage('Perfil criado localmente. O cadastro pode ser salvo no Supabase depois.');
+  }
+
+  const filteredProfiles = profiles.filter((profile) => {
+    const query = searchTerm.toLowerCase();
+    return profile.email.toLowerCase().includes(query) || (profile.full_name ?? '').toLowerCase().includes(query) || roleLabels[profile.role].toLowerCase().includes(query);
+  });
+
   return (
     <AppShell title="Usuários" subtitle="Gestão de perfis, permissões e acesso condominial">
       <div className="space-y-6">
@@ -93,8 +137,15 @@ export default function UsuariosPage() {
             <p className="text-sm text-slate-500 dark:text-slate-400">Gerencie contas, perfis e permissões do condomínio</p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
-            <Input placeholder="Buscar usuário" className="w-full sm:w-64" />
-            <Button>Adicionar</Button>
+            <Input
+              placeholder="Buscar usuário"
+              className="w-full sm:w-64"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+            />
+            <Button type="button" onClick={() => setActiveSection('roles')}>
+              Adicionar
+            </Button>
           </div>
         </div>
 
@@ -126,18 +177,38 @@ export default function UsuariosPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               {activeSection === 'overview' ? (
-                <div className="grid gap-3 md:grid-cols-3">
-                  <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
-                    <p className="text-sm text-slate-500">Usuários ativos</p>
-                    <p className="text-2xl font-semibold">{profiles.length}</p>
+                <div className="space-y-4">
+                  <div className="grid gap-3 md:grid-cols-3">
+                    <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
+                      <p className="text-sm text-slate-500">Usuários ativos</p>
+                      <p className="text-2xl font-semibold">{profiles.length}</p>
+                    </div>
+                    <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
+                      <p className="text-sm text-slate-500">Síndicos</p>
+                      <p className="text-2xl font-semibold">{profiles.filter((profile) => profile.role === 'sindico').length}</p>
+                    </div>
+                    <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
+                      <p className="text-sm text-slate-500">Moradores</p>
+                      <p className="text-2xl font-semibold">{profiles.filter((profile) => profile.role === 'morador').length}</p>
+                    </div>
                   </div>
-                  <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
-                    <p className="text-sm text-slate-500">Síndicos</p>
-                    <p className="text-2xl font-semibold">{profiles.filter((profile) => profile.role === 'sindico').length}</p>
-                  </div>
-                  <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
-                    <p className="text-sm text-slate-500">Moradores</p>
-                    <p className="text-2xl font-semibold">{profiles.filter((profile) => profile.role === 'morador').length}</p>
+
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
+                      <p className="font-medium">Ações rápidas</p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Button size="sm" type="button" onClick={() => setActiveSection('roles')}>
+                          Gerenciar perfis
+                        </Button>
+                        <Button variant="outline" size="sm" type="button" onClick={() => setActiveSection('permissions')}>
+                          Ver permissões
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
+                      <p className="font-medium">Resumo rápido</p>
+                      <p className="mt-1 text-sm text-slate-500">O módulo centraliza cadastros, permissões e acompanhamento do ciclo de usuários.</p>
+                    </div>
                   </div>
                 </div>
               ) : null}
@@ -146,55 +217,86 @@ export default function UsuariosPage() {
                 loading ? (
                   <p className="text-sm text-slate-500">Carregando usuários...</p>
                 ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Nome</TableHead>
-                        <TableHead>E-mail</TableHead>
-                        <TableHead>Perfil</TableHead>
-                        <TableHead>Ação</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {profiles.map((profile) => (
-                        <TableRow key={profile.id}>
-                          <TableCell>{profile.full_name ?? 'Sem nome'}</TableCell>
-                          <TableCell>{profile.email}</TableCell>
-                          <TableCell>{roleLabels[profile.role]}</TableCell>
-                          <TableCell>
-                            <select
-                              value={profile.role}
-                              onChange={(event) => updateRole(profile.id, event.target.value as Role)}
-                              disabled={savingId === profile.id}
-                              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
-                            >
-                              {roleOptions.map((role) => (
-                                <option key={role} value={role}>
-                                  {roleLabels[role]}
-                                </option>
-                              ))}
-                            </select>
-                          </TableCell>
+                  <div className="space-y-4">
+                    <form onSubmit={handleCreateProfile} className="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+                      <p className="font-medium">Criar novo perfil</p>
+                      <div className="mt-3 grid gap-3 md:grid-cols-3">
+                        <Input placeholder="Nome" value={newName} onChange={(event) => setNewName(event.target.value)} />
+                        <Input placeholder="E-mail" type="email" value={newEmail} onChange={(event) => setNewEmail(event.target.value)} />
+                        <select
+                          value={newRole}
+                          onChange={(event) => setNewRole(event.target.value as Role)}
+                          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+                        >
+                          {roleOptions.map((role) => (
+                            <option key={role} value={role}>
+                              {roleLabels[role]}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="mt-3">
+                        <Button type="submit">Salvar perfil</Button>
+                      </div>
+                    </form>
+
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Nome</TableHead>
+                          <TableHead>E-mail</TableHead>
+                          <TableHead>Perfil</TableHead>
+                          <TableHead>Ação</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredProfiles.map((profile) => (
+                          <TableRow key={profile.id}>
+                            <TableCell>{profile.full_name ?? 'Sem nome'}</TableCell>
+                            <TableCell>{profile.email}</TableCell>
+                            <TableCell>{roleLabels[profile.role]}</TableCell>
+                            <TableCell>
+                              <select
+                                value={profile.role}
+                                onChange={(event) => updateRole(profile.id, event.target.value as Role)}
+                                disabled={savingId === profile.id}
+                                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-950"
+                              >
+                                {roleOptions.map((role) => (
+                                  <option key={role} value={role}>
+                                    {roleLabels[role]}
+                                  </option>
+                                ))}
+                              </select>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 )
               ) : null}
 
               {activeSection === 'permissions' ? (
                 <div className="space-y-3">
-                  <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
-                    <p className="font-medium">Permissões por perfil</p>
-                    <p className="mt-1 text-sm text-slate-500">Síndico: acesso total. Morador: leitura e solicitação. Porteiro: gestão de entradas. Admin: administração completa.</p>
-                  </div>
-                  <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
-                    <p className="font-medium">Ações rápidas</p>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      <Button size="sm">Gerenciar permissões</Button>
-                      <Button variant="outline" size="sm">Duplicar perfil</Button>
+                  {permissionMatrix.map((item) => (
+                    <div key={item.role} className="rounded-xl border border-slate-200 p-3 dark:border-slate-800">
+                      <div className="flex items-center justify-between">
+                        <p className="font-medium">{roleLabels[item.role]}</p>
+                        <span className="rounded-full bg-cyan-500/10 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-700 dark:text-cyan-300">
+                          {item.role}
+                        </span>
+                      </div>
+                      <ul className="mt-2 space-y-1 text-sm text-slate-500">
+                        {item.access.map((access) => (
+                          <li key={access} className="flex items-center gap-2">
+                            <span className="h-2 w-2 rounded-full bg-cyan-500" />
+                            {access}
+                          </li>
+                        ))}
+                      </ul>
                     </div>
-                  </div>
+                  ))}
                 </div>
               ) : null}
 
@@ -202,7 +304,14 @@ export default function UsuariosPage() {
                 <div className="space-y-3">
                   <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
                     <p className="font-medium">Últimas atividades</p>
-                    <p className="mt-1 text-sm text-slate-500">Nenhuma atividade recente registrada ainda.</p>
+                    <ul className="mt-3 space-y-2 text-sm text-slate-500">
+                      {activityFeed.map((item) => (
+                        <li key={item.title} className="rounded-lg bg-slate-50 p-3 dark:bg-slate-900">
+                          <p className="font-medium text-slate-700 dark:text-slate-200">{item.title}</p>
+                          <p className="mt-1">{item.detail}</p>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 </div>
               ) : null}
