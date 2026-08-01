@@ -33,7 +33,7 @@ export function SignInForm() {
       return;
     }
 
-    router.push('/dashboard');
+    router.push('/dashboard/usuarios');
     router.refresh();
   }
 
